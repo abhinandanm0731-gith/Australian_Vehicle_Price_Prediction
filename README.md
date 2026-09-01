@@ -11,6 +11,8 @@ pandas 2.3.3
 matplotlib 3.11.0
 seaborn 0.13.2
 
+```
+
 ## Overview
 
 This notebook walks through the full data science pipeline:
