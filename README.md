@@ -2,6 +2,15 @@
 
 An end-to-end data science project that cleans, explores, and models the **Australian Vehicle Prices** dataset to understand what drives used-car prices in Australia and to predict them using machine learning.
 
+## Requirements
+
+```
+python 3.13.9
+numpy 2.3.5
+pandas 2.3.3
+matplotlib 3.11.0
+seaborn 0.13.2
+
 ## Overview
 
 This notebook walks through the full data science pipeline:
@@ -81,14 +90,6 @@ The most influential features on predicted price were: **Year, Kilometres, Drive
 - **Lamborghini** has the widest price range (highest-priced segment), followed by McLaren, Aston Martin, and Ferrari, while Nissan, Honda, and Hyundai represent more affordable brands.
 - Vehicle age (`Year`) is by far the strongest driver of price — more than double the combined effect of mileage, drivetrain, and engine size.
 
-## Requirements
-
-```
-python 3.13.9
-numpy 2.3.5
-pandas 2.3.3
-matplotlib 3.11.0
-seaborn 0.13.2
 scikit-learn 1.9.0
 statsmodels 0.14.5
 scipy 1.16.3
