@@ -93,28 +93,3 @@ scikit-learn 1.9.0
 statsmodels 0.14.5
 scipy 1.16.3
 ```
-
-Install with:
-
-```bash
-pip install numpy pandas matplotlib seaborn scikit-learn statsmodels scipy
-```
-
-## Usage
-
-1. Clone this repository
-2. Place `Australian Vehicle Prices.csv` in the project directory
-3. Open and run the notebook cell by cell:
-
-```bash
-jupyter notebook Code.ipynb
-```
-
-## Project Structure
-
-```
-.
-├── Code.ipynb                          # Main analysis notebook
-├── Australian Vehicle Prices.csv       # Dataset (not included, see above)
-└── README.md
-```
