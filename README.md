@@ -1,98 +1,128 @@
-# Australian Vehicle Price Prediction
+# 🚗 Australian Vehicle Price Prediction
 
-An end-to-end data science project that cleans, explores, and models the **Australian Vehicle Prices** dataset to understand what drives used-car prices in Australia and to predict them using machine learning.
+An end-to-end machine learning pipeline that predicts the resale price (AUD) of used and new vehicles listed in Australia. The project covers data cleaning, leak-free imputation, exploratory analysis, feature engineering, model comparison, and a formal set of regression diagnostics that explain *why* linear models fall short on this problem.
 
-## Requirements
+
+---
+## 🛠️ Tech Stack
+
+`Python` · `pandas` · `NumPy` · `scikit-learn` · `statsmodels` · `SciPy` · `Matplotlib` · `Seaborn`
+
+---
+
+## 📌 Highlights
+
+- **16,734 vehicle listings**, 19 raw columns (brand, model, year, kilometres, engine, fuel, transmission, body type, location, etc.).
+- **No data leakage**: the train/test split happens *before* any imputation, grouping, or binning. Every statistic is learned from the training set only.
+- **Champion model: Random Forest**, with a test R² of **0.896** on log-price and a test MAE of about **AUD 6,191**, roughly AUD 1,500 better than the OLS baseline.
+- **Statistical rigor**: Durbin-Watson, Breusch-Pagan, Shapiro-Wilk, Jarque-Bera, VIF, and Cook's Distance are used to justify the choice of model.
+
+---
+
+## 📂 Repository Structure
 
 ```
-python 3.13.9
-numpy 2.3.5
-pandas 2.3.3
-matplotlib 3.11.0
-seaborn 0.13.2
-
+.
+├── Code_Price_Prediction.ipynb     # Full analysis: cleaning → EDA → modelling → diagnostics
+├── Australian Vehicle Prices.csv   # Dataset (see "Data" below)
+└── README.md
 ```
 
-## Overview
+---
 
-This notebook walks through the full data science pipeline:
+## 🗂️ Data
 
-1. **Data Cleaning & Preprocessing** — handling messy string fields, missing values, and type conversions
-2. **Exploratory Data Analysis (EDA)** — visualizing distributions, relationships, and correlations
-3. **Regression Assumption Checks** — linearity, autocorrelation, heteroscedasticity, multicollinearity, influential points, and normality
-4. **Model Building** — Ridge Regression, Decision Tree, and Random Forest regressors
-5. **Model Evaluation & Feature Importance**
-6. **Conclusions & Insights**
+The dataset is the **Australian Vehicle Prices** listing data (Kaggle). Each row is one vehicle listing.
 
-## Dataset
-
-The analysis uses `Australian Vehicle Prices.csv`, a dataset of car listings in the Australian market (2023), containing features such as:
-
-- `Brand`, `Model`, `Year`, `UsedOrNew`
-- `Transmission`, `DriveType`, `FuelType`, `FuelConsumption`
-- `Engine`, `CylindersinEngine`, `Doors`, `Seats`
-- `BodyType`, `Location`, `Kilometres`, `Price`
+| Type | Columns |
+| :--- | :--- |
+| Target | `Price` (AUD) |
+| Numeric | `Year`, `Kilometres`, `Engine`, `CylindersinEngine`, `FuelConsumption`, `Doors`, `Seats` |
+| Categorical | `Brand`, `Model`, `UsedOrNew`, `Transmission`, `DriveType`, `FuelType`, `BodyType`, `ColourExtInt`, `Location` |
 
 
-## Workflow
+---
 
-### 1. Data Cleaning & Preprocessing
-- Dropped high-cardinality/unusable columns (`Model`, `Car/Suv`, `Title`, `ColourExtInt`)
-- Parsed compound string fields (`Engine`, `FuelConsumption`, `Location`, `CylindersinEngine`, `Doors`, `Seats`) into usable numeric values
-- Replaced placeholder values (`-`, `POA`) with `NaN`
-- Dropped rows missing critical fields; imputed missing values in numeric fields using the mode
-- Cast columns to appropriate data types
+## 🔬 Methodology
 
-### 2. Exploratory Data Analysis
-- Count plots for `Brand`, `UsedOrNew`, `Transmission`, `DriveType`, `FuelType`, `Location`, `BodyType`
-- Scatter plots of `Price` vs. `Kilometres`, `Year`, and `FuelConsumption`
-- Outlier identification and removal (e.g., a vintage Ferrari priced far outside the normal range)
-- Box plots of `Price` by `Location` and `Brand`
-- Correlation heatmap and KDE plots to inspect skewness
+### 1. Data Cleaning
+- Dropped `Car/Suv` (a noisier duplicate of `BodyType`), `Title`, and the high-cardinality sub-model/feature text.
+- Dropped `ColourInt` because about 46% of its values were missing.
+- Split `ColourExtInt` into exterior and interior colour, and extracted `State` from `Location`.
+- Converted placeholder values (`-`, `POA`, `0`) to `NaN`.
+- Parsed numeric values out of text fields: engine capacity (`EngineCC`), cylinders, fuel consumption, doors, and seats.
+- Replaced junk colour labels such as `"3 years"` (warranty text) with `Unknown`.
 
-### 3. Data Preparation
-- Label-encoded `Brand`
-- One-hot encoded categorical columns (`UsedOrNew`, `Transmission`, `DriveType`, `FuelType`, `BodyType`)
+### 2. Leak-Free Train/Test Split and Imputation
+The data is split **80/20** (`random_state=42`) before any imputation. All fill values come from the training set only.
 
-### 4. Regression Assumption Checks
-- **Linearity** — residuals vs. fitted values plot
-- **Autocorrelation** — Durbin–Watson statistic
-- **Heteroscedasticity** — Breusch–Pagan test
-- **Multicollinearity** — Variance Inflation Factor (VIF)
-- **Influential points** — Cook's distance
-- **Normality** — Q-Q plot and Shapiro–Wilk test, followed by a Box-Cox transformation of the target variable to address non-normality and heteroscedasticity
+| Features | Imputation strategy |
+| :--- | :--- |
+| `Doors`, `Seats`, `FuelType` | Hierarchical mode: (Brand, BodyType) → BodyType / Brand → global |
+| `EngineCC`, `CylindersinEngine`, `FuelConsumption` | **Hot-deck random sampling** from similar cars: (Brand, BodyType, FuelType) → (Brand, BodyType) → Brand → global. This avoids the artificial spike a single median creates. |
+| `Kilometres` | Grouped median: (UsedOrNew, Year) → UsedOrNew → global |
+| `Transmission` | Hierarchical mode: (Brand, Year) → Brand → global |
+| `BodyType`, `ColourExt`, `State` | Filled with `Unknown` |
 
-### 5. Model Building
-Three regression models were trained and hyperparameter-tuned (via `GridSearchCV` where applicable):
+**Missingness indicators** (`specs_missing`, `km_missing`) are added so the models can tell imputed rows apart. The notebook found that the five spec columns tend to be missing *together* (not at random), which is why a flag is useful.
 
-| Model | Rationale |
-|---|---|
-| **Ridge Regression** | Handles multicollinearity while preserving interpretability |
-| **Decision Tree Regressor** | Captures non-linear relationships without requiring transformations |
-| **Random Forest Regressor** | Handles complex feature interactions on a larger dataset with reduced overfitting risk |
+### 3. Exploratory Data Analysis
+- Price is strongly right-skewed, so the target is modelled as `log1p(Price)`.
+- Depreciation curves for `Year` and `Kilometres` against log-price.
+- Price comparisons across `UsedOrNew`, `Transmission`, and `BodyType`.
+- The 15 most common brands against their median price.
+- A correlation heatmap of the numeric features, which shows `EngineCC` ↔ `CylindersinEngine` (r ≈ 0.75) and `Year` ↔ `Kilometres` (r ≈ −0.72).
 
-### 6. Model Evaluation
-Models were compared using R², Adjusted R², RMSE, MAE, and MAPE.
+### 4. Feature Engineering
+- **Outlier filtering (train only):** `1,500 ≤ Price ≤ 500,000`, `Year ≥ 1995`, `Kilometres ≤ 500,000`. Test rows are never dropped, so evaluation stays honest. Test mileage is capped at the training 99.5th percentile.
+- **`Vehicle_Age`** = 2024 − `Year`.
+- **`Market_Segment`**: a 5-tier feature (`Budget`, `Economy`, `Mid_Range`, `Premium`, `Luxury`) built from the median price of each (Brand, BodyType) pair in the training set. This replaces 600+ sparse one-hot `Model` columns.
+- One-hot encoding (`drop_first=True`) with train/test column alignment (131 final features), and `StandardScaler` on the continuous columns.
 
-**Best model: Random Forest Regressor**
-- R² Score: **0.86**
-- RMSE: **5085.20**
-- MAE: **3492.49**
-- MAPE: **0.134**
+### 5. Modelling
+Four models are trained on `log1p(Price)` and evaluated on the held-out test set:
 
-### 7. Feature Importance
-The most influential features on predicted price were: **Year, Kilometres, DriveType_Front, Engine, Brand,** and **FuelType_Unleaded** — with vehicle age (`Year`) as the single dominant driver of price, reflecting depreciation.
+- OLS Linear Regression
+- Ridge Regression (`alpha=10`)
+- Decision Tree (`max_depth=10`, `min_samples_leaf=10`)
+- Random Forest (`n_estimators=200`, `max_depth=15`, `min_samples_leaf=3`)
 
-## Key Insights
+---
 
-- **Toyota** had the highest number of sales in the Australian market in 2023, followed by Hyundai, Mazda, and Holden; **Smart** had the fewest.
-- The market is dominated by **used, automatic** vehicles.
-- **New South Wales** leads in sales volume, followed by Victoria.
-- **SUVs** are the most in-demand body type.
-- **Lamborghini** has the widest price range (highest-priced segment), followed by McLaren, Aston Martin, and Ferrari, while Nissan, Honda, and Hyundai represent more affordable brands.
-- Vehicle age (`Year`) is by far the strongest driver of price — more than double the combined effect of mileage, drivetrain, and engine size.
+## 📊 Results
 
-scikit-learn 1.9.0
-statsmodels 0.14.5
-scipy 1.16.3
+| Model | Train R² (log) | Test R² (log) | Test R² (AUD) | Test MAE (AUD) | Test RMSE (AUD) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| OLS Linear Regression | 0.8517 | 0.8489 | 0.7067 | $7,681 | $20,344 |
+| Ridge Regression (α = 10) | 0.8463 | 0.8414 | 0.6344 | $8,051 | $22,713 |
+| Decision Tree | 0.8776 | 0.8184 | 0.6720 | $8,250 | $21,512 |
+| **Random Forest** | **0.9580** | **0.8957** | **0.7774** | **$6,191** | **$17,721** |
+
+### Why not a linear model? Regression diagnostics
+
+| Diagnostic | Result | Takeaway |
+| :--- | :--- | :--- |
+| Durbin-Watson | 2.0364 | Errors are independent (passed) |
+| Breusch-Pagan |  p < 0.001 | Heteroscedasticity: luxury and older cars have wider price spread |
+| Shapiro-Wilk | \ p < 0.001 | Heavy-tailed residuals from flagship and performance trims |
+| Cook's Distance (> 4/n) | 671 rows (5.05% of train) | A noticeable share of influential points |
+| Correlation / VIF | r = 0.75 and −0.72 | Multicollinearity, which motivates regularisation |
+
+These tests explain why tree-based ensembles outperform OLS here: they handle non-linearity, interactions, and non-normal errors without distributional assumptions.
+
+---
+
+## 🚀 Getting Started
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/<your-username>/<repo-name>.git
+cd <repo-name>
+
+# 2. Install dependencies
+pip install pandas numpy matplotlib seaborn scikit-learn scipy statsmodels jupyter
+
+# 3. Launch the notebook
+jupyter notebook Code_Price_Prediction.ipynb
 ```
+
