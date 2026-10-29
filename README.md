@@ -91,18 +91,11 @@ Four models are trained on `log1p(Price)` and evaluated on the held-out test set
 | :--- | :--- | :--- |
 | Durbin-Watson | 2.0364 | Errors are independent (passed) |
 | Breusch-Pagan |  p < 0.001 | Heteroscedasticity: luxury and older cars have wider price spread |
-| Shapiro-Wilk | \ p < 0.001 | Heavy-tailed residuals from flagship and performance trims |
+| Shapiro-Wilk |  p < 0.001 | Heavy-tailed residuals from flagship and performance trims |
 | Cook's Distance (> 4/n) | 671 rows (5.05% of train) | A noticeable share of influential points |
 | Correlation / VIF | r = 0.75 and −0.72 | Multicollinearity, which motivates regularisation |
 
 These tests explain why tree-based ensembles outperform OLS here: they handle non-linearity, interactions, and non-normal errors without distributional assumptions.
 
 ---
-
-# 2. Install dependencies
-pip install pandas numpy matplotlib seaborn scikit-learn scipy statsmodels jupyter
-
-# 3. Launch the notebook
-jupyter notebook Code_Price_Prediction.ipynb
-```
 
