@@ -99,13 +99,6 @@ These tests explain why tree-based ensembles outperform OLS here: they handle no
 
 ---
 
-## 🚀 Getting Started
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
-
 # 2. Install dependencies
 pip install pandas numpy matplotlib seaborn scikit-learn scipy statsmodels jupyter
 
