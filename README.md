@@ -17,19 +17,6 @@ An end-to-end machine learning pipeline that predicts the resale price (AUD) of 
 - **Champion model: Random Forest**, with a test R² of **0.896** on log-price and a test MAE of about **AUD 6,191**, roughly AUD 1,500 better than the OLS baseline.
 - **Statistical rigor**: Durbin-Watson, Breusch-Pagan, Shapiro-Wilk, Jarque-Bera, VIF, and Cook's Distance are used to justify the choice of model.
 
----
-
-## 📂 Repository Structure
-
-```
-.
-├── Code_Price_Prediction.ipynb     # Full analysis: cleaning → EDA → modelling → diagnostics
-├── Australian Vehicle Prices.csv   # Dataset (see "Data" below)
-└── README.md
-```
-
----
-
 ## 🗂️ Data
 
 The dataset is the **Australian Vehicle Prices** listing data (Kaggle). Each row is one vehicle listing.
